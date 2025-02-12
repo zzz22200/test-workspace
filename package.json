@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "next start"
+    "dev": "nx serve table-together",
+    "build": "nx build table-together",
+    "serve": "nx serve table-together"
   },
   "private": true,
   "dependencies": {
