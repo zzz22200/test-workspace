@@ -13,6 +13,8 @@ interface GameDetails {
     points: number;
     rewards: string[];
   };
+  currentPlayers: number;
+  maxPlayers: number;
 }
 
 const gameDetails: GameDetails = {
@@ -38,7 +40,9 @@ const gameDetails: GameDetails = {
       "組織者經驗值加成",
       "新手指導獎勵"
     ]
-  }
+  },
+  currentPlayers: 1,
+  maxPlayers: 4
 };
 
 export default function GameInvite() {
@@ -55,7 +59,12 @@ export default function GameInvite() {
             />
           </div>
           <div className="p-6">
-            <h1 className="text-3xl font-bold mb-4">{gameDetails.name}</h1>
+            <h1 className="text-3xl font-bold mb-4">
+              {gameDetails.name} 
+              <span className="text-lg text-gray-600 ml-2">
+                ({gameDetails.currentPlayers}/{gameDetails.maxPlayers})
+              </span>
+            </h1>
             <div className="flex flex-wrap gap-2 mb-4">
               {gameDetails.tags.map((tag, index) => (
                 <span 
