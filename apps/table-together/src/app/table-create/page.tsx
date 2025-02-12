@@ -1,5 +1,12 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import debounce from 'lodash/debounce';
+
+interface BGGGame {
+  id: string;
+  name: string;
+  yearPublished: string;
+}
 
 // 預設的標籤選項
 const TAG_OPTIONS = [
@@ -29,6 +36,10 @@ export default function TableCreate() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [newNote, setNewNote] = useState('');
   const [newReward, setNewReward] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<BGGGame[]>([]);
+  const [showResults, setShowResults] = useState(false);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -163,6 +174,80 @@ export default function TableCreate() {
     fileInputRef.current?.click();
   };
 
+  // 使用 debounce 避免過多請求
+  const searchBGG = useCallback(
+    debounce(async (query: string) => {
+      if (!query.trim()) {
+        setSearchResults([]);
+        setIsSearching(false);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        // 第一次請求
+        let response = await fetch(`https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(query)}&type=boardgame`);
+        
+        // 如果返回 202，等待一秒後重試
+        if (response.status === 202) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          response = await fetch(`https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(query)}&type=boardgame`);
+        }
+
+        if (!response.ok) {
+          throw new Error(`BGG API error: ${response.status}`);
+        }
+
+        const text = await response.text();
+        
+        // 解析 XML 回應
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(text, "text/xml");
+        const items = xmlDoc.getElementsByTagName("item");
+        
+        const games: BGGGame[] = [];
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          const id = item.getAttribute("id") || "";
+          const nameElement = item.getElementsByTagName("name")[0];
+          const yearElement = item.getElementsByTagName("yearpublished")[0];
+          
+          if (nameElement) {
+            games.push({
+              id,
+              name: nameElement.getAttribute("value") || "",
+              yearPublished: yearElement ? yearElement.getAttribute("value") || "" : ""
+            });
+          }
+        }
+
+        setSearchResults(games);
+      } catch (error) {
+        console.error('BGG search error:', error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500),
+    []
+  );
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    setShowResults(true);
+    searchBGG(query);
+  };
+
+  const selectGame = (game: BGGGame) => {
+    setFormData(prev => ({
+      ...prev,
+      name: game.name
+    }));
+    setSearchQuery(game.name);
+    setShowResults(false);
+  };
+
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-2xl mx-auto">
@@ -224,19 +309,56 @@ export default function TableCreate() {
               </div>
             </div>
 
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 遊戲名稱
               </label>
               <input
                 type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onFocus={() => setShowResults(true)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="輸入遊戲名稱搜尋..."
                 required
               />
               {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+              
+              {/* 搜尋結果下拉框 */}
+              {showResults && (searchResults.length > 0 || isSearching) && (
+                <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg max-h-60 overflow-auto">
+                  {isSearching ? (
+                    <div className="px-4 py-3 text-sm text-gray-700 flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      搜尋中...
+                    </div>
+                  ) : searchResults.length === 0 ? (
+                    <div className="px-4 py-3 text-sm text-gray-700">
+                      找不到相關遊戲
+                    </div>
+                  ) : (
+                    <ul>
+                      {searchResults.map((game) => (
+                        <li
+                          key={game.id}
+                          onClick={() => selectGame(game)}
+                          className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center justify-between"
+                        >
+                          <span>{game.name}</span>
+                          {game.yearPublished && (
+                            <span className="text-gray-500 text-xs">
+                              ({game.yearPublished})
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
 
             <div>
