@@ -2,7 +2,9 @@
   "name": "@test-workspace/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "start": "next start"
+  },
   "private": true,
   "dependencies": {
     "@nrwl/react": "^19.8.4",
