@@ -1,4 +1,5 @@
 import './global.css';
+import Link from 'next/link';
 
 export const metadata = {
   title: 'Welcome to table-together',
@@ -12,7 +13,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <nav>
+          <ul>
+            <li>
+              <Link href="/tableList">Table List</Link>
+            </li>
+            <li>
+              <Link href="/tableCreate">Table Create</Link>
+            </li>
+          </ul>
+        </nav>
+        <main>{children}</main>
+      </body>
     </html>
   );
 }
