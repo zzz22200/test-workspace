@@ -17,10 +17,10 @@ export default function RootLayout({
         <nav>
           <ul>
             <li>
-              <Link href="/tableList">Table List</Link>
+              <Link href="/table-list">Table List</Link>
             </li>
             <li>
-              <Link href="/tableCreate">Table Create</Link>
+              <Link href="/table-create">Table Create</Link>
             </li>
           </ul>
         </nav>
