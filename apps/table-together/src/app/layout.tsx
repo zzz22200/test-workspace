@@ -14,17 +14,36 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <nav>
-          <ul>
-            <li>
-              <Link href="/table-list">Table List</Link>
-            </li>
-            <li>
-              <Link href="/table-create">Table Create</Link>
-            </li>
-          </ul>
-        </nav>
-        <main>{children}</main>
+        <div className="flex min-h-screen">
+          {/* Sidebar Menu */}
+          <nav className="w-64 bg-gray-800 text-white p-6">
+            <div className="mb-8">
+              <h2 className="text-xl font-bold">Table Together</h2>
+            </div>
+            <ul className="space-y-2">
+              <li>
+                <Link 
+                  href="/table-list" 
+                  className="block px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 ease-in-out"
+                >
+                  Table List
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  href="/table-create" 
+                  className="block px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 ease-in-out"
+                >
+                  Table Create
+                </Link>
+              </li>
+            </ul>
+          </nav>
+          {/* Main Content */}
+          <main className="flex-1 bg-gray-100">
+            {children}
+          </main>
+        </div>
       </body>
     </html>
   );
